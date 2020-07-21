@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dating</string>
+    <string name="facebook_app_id">312360060131551</string>
+    <string name="fb_login_protocol_scheme">fb312360060131551</string>
+</resources>
