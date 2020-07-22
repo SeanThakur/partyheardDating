@@ -61,6 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<Null> _logOut() async {
     await facebookLogin.logOut();
+    print("Logout");
     setState(() {
       this.isLoggedIn = false;
     });
