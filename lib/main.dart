@@ -33,7 +33,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  Map userProfile;
   SharedPreferences logindata;
   bool newuser;
 
@@ -65,17 +64,14 @@ class _MyHomePageState extends State<MyHomePage> {
           FacebookAuthProvider.getCredential(accessToken: accessToken.token),
         ).then((user) async {
           final graphResponse = await http.get(
-              'https://graph.facebook.com/v2.12/me?fields=name,picture,first_name,last_name,email&access_token=${accessToken.token}');
+              'https://graph.facebook.com/v2.12/me?fields=name,picture.height(640).width(640),first_name,last_name,email&access_token=${accessToken.token}');
           var profile = json.decode(graphResponse.body);
           print(profile.toString());
-          setState(() {
-            this.userProfile = profile;
-          });
-          print('userProfile ${userProfile}');
-          if (userProfile["id"] != '') {
+          //Checking if the user id is present if does then navigate to MyDashboard page
+          if (profile["id"] != '') {
             print('Successfull');
             logindata.setBool('login', false);
-            logindata.setString('id', userProfile["id"]);
+            logindata.setString('id', profile["id"]);
             Navigator.push(context,
                 MaterialPageRoute(builder: (context) => MyDashboard()));
           }
@@ -94,7 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           }
         });
-        //Checking if the user id is present if does then navigate to MyDashboard page
 
         break;
       case FacebookLoginStatus.cancelledByUser:
