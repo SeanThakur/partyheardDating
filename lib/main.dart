@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import './MyDashboard.dart';
 
@@ -60,20 +61,41 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
         final FacebookAccessToken accessToken = result.accessToken;
-        final graphResponse = await http.get(
-            'https://graph.facebook.com/v2.12/me?fields=name,picture,first_name,last_name,email&access_token=${accessToken.token}');
-        var profile = json.decode(graphResponse.body);
-        print(profile.toString());
-        setState(() {
-          userProfile = profile;
+        _auth.signInWithCredential(
+          FacebookAuthProvider.getCredential(accessToken: accessToken.token),
+        ).then((user) async {
+          final graphResponse = await http.get(
+              'https://graph.facebook.com/v2.12/me?fields=name,picture,first_name,last_name,email&access_token=${accessToken.token}');
+          var profile = json.decode(graphResponse.body);
+          print(profile.toString());
+          setState(() {
+            this.userProfile = profile;
+          });
+          print('userProfile ${userProfile}');
+          if (userProfile["id"] != '') {
+            print('Successfull');
+            logindata.setBool('login', false);
+            logindata.setString('id', userProfile["id"]);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => MyDashboard()));
+          }
+          //storing Snapshot
+          final DocumentSnapshot doc = await Firestore.instance.collection("datingUser").document(user.user.uid).get();
+          //Storing the user data in the Firestore database
+          if (!doc.exists) {
+            await Firestore.instance.collection("datingUser").document(user.user.uid).setData({
+              "firstName": profile["first_name"],
+              "lastName": profile["last_name"],
+              "userName": profile["name"],
+              "email": profile['email'],
+              "photUrl": profile["picture"]["data"]["url"],
+              "signin_method": 'Facebook',
+              "uid": user.user.uid,
+            });
+          }
         });
-        if (userProfile["id"] != '') {
-          print('Successfull');
-          logindata.setBool('login', false);
-          logindata.setString('id', userProfile["id"]);
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => MyDashboard()));
-        }
+        //Checking if the user id is present if does then navigate to MyDashboard page
+
         break;
       case FacebookLoginStatus.cancelledByUser:
         print('Login cancelled by the user.');
